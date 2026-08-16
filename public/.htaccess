@@ -1,0 +1,20 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirect trailing slashes if not a folder.
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.+)/$ /$1 [L,R=301]
+
+    # Send all non-file, non-directory requests to the front controller.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Prevent directory listing.
+Options -Indexes
+
+# Deny access to sensitive files.
+<FilesMatch "\.(env|json|lock|md|sql|log)$">
+    Require all denied
+</FilesMatch>
