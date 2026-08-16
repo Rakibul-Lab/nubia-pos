@@ -14,10 +14,13 @@ final class App
     public function boot(): void
     {
         // .env MUST load before any config() call so cached config sees real values.
-        $this->loadEnv();
+        self::loadEnv();
         $this->configureErrors();
 
         date_default_timezone_set(config('app.timezone', 'UTC'));
+
+        // Deployments are file uploads, so the database catches itself up here.
+        Updater::maybeRun();
 
         Session::start();
         $this->securityHeaders();
@@ -32,9 +35,9 @@ final class App
     }
 
     /**
-     * Parse the .env file into $_ENV.
+     * Parse the .env file into $_ENV. Also used by the maintenance scripts.
      */
-    private function loadEnv(): void
+    public static function loadEnv(): void
     {
         // Use the BASE_PATH constant directly; calling config() here would
         // prematurely cache configuration before env vars are available.
