@@ -20,7 +20,7 @@ use Throwable;
 final class Updater
 {
     /** Bump this whenever a deployment must re-run the update pass. */
-    public const VERSION = 7;
+    public const VERSION = 9;
 
     /** Catalog version that introduced the fine-grained finance permissions. */
     private const RBAC_VERSION = 6;
@@ -333,6 +333,9 @@ final class Updater
                 $this->expandLegacyGrants($pdo);
             }
 
+            $this->expandDashboardCardGrants($pdo);
+            $this->expandWholesaleGrants($pdo);
+
             // Admin remains the full-access non-bypass system role.
             $pdo->exec(
                 'INSERT IGNORE INTO role_permissions (role_id, permission_id)
@@ -440,6 +443,67 @@ final class Updater
     }
 
     /**
+     * Copy existing finance KPI visibility onto the dashboard card permissions
+     * in Main, so roles keep seeing the same cards after the catalog split.
+     */
+    private function expandDashboardCardGrants(PDO $pdo): void
+    {
+        $fromMetrics = [
+            'sales_total.view' => ['dashboard.sales'],
+            'profit.view'      => ['dashboard.profit'],
+            'costs.view'       => ['dashboard.purchase'],
+            'expenses.view'    => ['dashboard.expenses'],
+            'revenue.view'     => ['dashboard.revenue'],
+            'dues.view'        => ['dashboard.due_collection', 'dashboard.due_payment'],
+            'stock_value.view' => ['dashboard.stock_value'],
+        ];
+        $fromCharts = [
+            'sales_total.view' => 'dashboard.sales',
+            'profit.view'      => 'dashboard.profit',
+            'costs.view'       => 'dashboard.purchase',
+        ];
+
+        $grant = $pdo->prepare(
+            'INSERT IGNORE INTO role_permissions (role_id, permission_id)
+             SELECT parent.role_id, card.id
+             FROM role_permissions parent
+             JOIN permissions parent_p ON parent_p.id = parent.permission_id AND parent_p.slug = ?
+             JOIN permissions finance ON finance.slug = ?
+             JOIN role_permissions finance_rp
+               ON finance_rp.role_id = parent.role_id AND finance_rp.permission_id = finance.id
+             JOIN permissions card ON card.slug = ?'
+        );
+
+        foreach ($fromMetrics as $finance => $cards) {
+            foreach ($cards as $card) {
+                $grant->execute(['dashboard.metrics', $finance, $card]);
+            }
+        }
+        foreach ($fromCharts as $finance => $card) {
+            $grant->execute(['dashboard.charts', $finance, $card]);
+        }
+
+        $this->log[] = 'expanded dashboard KPI grants';
+    }
+
+    /**
+     * Roles that could already see the product catalog keep wholesale prices
+     * until an admin revokes the new permission.
+     */
+    private function expandWholesaleGrants(PDO $pdo): void
+    {
+        $pdo->prepare(
+            'INSERT IGNORE INTO role_permissions (role_id, permission_id)
+             SELECT rp.role_id, wholesale.id
+             FROM role_permissions rp
+             JOIN permissions products ON products.id = rp.permission_id AND products.slug = ?
+             JOIN permissions wholesale ON wholesale.slug = ?'
+        )->execute(['products.view', 'products.wholesale.view']);
+
+        $this->log[] = 'expanded wholesale view grants';
+    }
+
+    /**
      * Give previously empty seeded roles useful least-privilege defaults.
      * Custom roles and any role already configured by the user are untouched.
      */
@@ -470,6 +534,10 @@ final class Updater
             ],
             'accountant' => [
                 'dashboard.view', 'dashboard.metrics', 'dashboard.charts',
+                'dashboard.sales', 'dashboard.profit', 'dashboard.purchase',
+                'dashboard.expenses', 'dashboard.revenue',
+                'dashboard.due_collection', 'dashboard.due_payment',
+                'dashboard.stock_value',
                 'costs.view', 'profit.view', 'sales_total.view', 'revenue.view', 'stock_value.view', 'dues.view',
                 'expenses.view', 'expenses.create', 'expenses.edit', 'expenses.delete',
                 'expense_categories.view', 'expense_categories.create',
@@ -483,6 +551,8 @@ final class Updater
                 $all,
                 static fn (string $slug): bool => $slug === 'dashboard.view'
                     || $slug === 'dashboard.metrics'
+                    || $slug === 'dashboard.purchase'
+                    || $slug === 'dashboard.stock_value'
                     || $slug === 'costs.view'
                     || $slug === 'stock_value.view'
                     || str_starts_with($slug, 'products.')

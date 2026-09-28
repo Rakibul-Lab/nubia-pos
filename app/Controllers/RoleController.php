@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Database;
+use App\Core\PermissionRegistry;
 use App\Core\Response;
 use App\Models\Role;
 
@@ -68,9 +69,25 @@ final class RoleController extends Controller
             $grouped[$p['module']][] = $p;
         }
 
+        $catalogOrder = [];
+        foreach (PermissionRegistry::catalog() as $module => $items) {
+            $catalogOrder[$module] = array_keys($items);
+        }
+        foreach ($grouped as $module => $perms) {
+            $order = $catalogOrder[$module] ?? [];
+            usort($perms, static function (array $a, array $b) use ($order): int {
+                $ia = array_search($a['slug'], $order, true);
+                $ib = array_search($b['slug'], $order, true);
+                $ia = $ia === false ? PHP_INT_MAX : $ia;
+                $ib = $ib === false ? PHP_INT_MAX : $ib;
+                return $ia <=> $ib;
+            });
+            $grouped[$module] = $perms;
+        }
+
         // Match sidebar navigation sections.
         $sections = [
-            'Main'           => ['icon' => 'grid_view', 'hint' => 'Dashboard, POS and Direct Buy & Sell'],
+            'Main'           => ['icon' => 'grid_view', 'hint' => 'Dashboard KPIs, POS and Direct Buy & Sell'],
             'Inventory'      => ['icon' => 'inventory_2', 'hint' => 'Products, catalog and stock'],
             'Transactions'   => ['icon' => 'receipt_long', 'hint' => 'Sales, purchases and quotations'],
             'People'         => ['icon' => 'groups', 'hint' => 'Customers and suppliers'],

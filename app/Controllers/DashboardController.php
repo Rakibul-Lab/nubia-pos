@@ -71,44 +71,61 @@ final class DashboardController extends Controller
 
         $trend = Auth::can('dashboard.charts') ? $dashboard->salesTrend($start, $end) : [];
         if ($trend !== []) {
-            if (!Auth::can('sales_total.view')) {
+            if (!Auth::can('dashboard.sales')) {
                 unset($trend['sales']);
             }
-            if (!Auth::can('profit.view')) {
+            if (!Auth::can('dashboard.profit')) {
                 unset($trend['profit']);
             }
-            if (!Auth::can('costs.view')) {
+            if (!Auth::can('dashboard.purchase')) {
                 unset($trend['purchases']);
             }
         }
 
-        $kpis = Auth::can('dashboard.metrics') ? $dashboard->kpis($start, $end) : [];
+        $kpis = (Auth::can('dashboard.metrics')
+            || Auth::can('dashboard.sales')
+            || Auth::can('dashboard.profit')
+            || Auth::can('dashboard.purchase')
+            || Auth::can('dashboard.expenses')
+            || Auth::can('dashboard.revenue')
+            || Auth::can('dashboard.due_collection')
+            || Auth::can('dashboard.due_payment')
+            || Auth::can('dashboard.stock_value'))
+            ? $dashboard->kpis($start, $end)
+            : [];
         if ($kpis !== []) {
-            if (!Auth::can('sales_total.view')) {
+            if (!Auth::can('dashboard.sales')) {
                 unset($kpis['sales']);
             }
-            if (!Auth::can('revenue.view')) {
+            if (!Auth::can('dashboard.revenue')) {
                 unset($kpis['revenue']);
             }
-            if (!Auth::can('profit.view')) {
+            if (!Auth::can('dashboard.profit')) {
                 unset($kpis['profit']);
             }
-            if (!Auth::can('costs.view')) {
+            if (!Auth::can('dashboard.purchase')) {
                 unset($kpis['purchase']);
             }
-            if (!Auth::can('stock_value.view')) {
+            if (!Auth::can('dashboard.stock_value')) {
                 unset($kpis['stock_value']);
             }
-            if (!Auth::can('expenses.view')) {
+            if (!Auth::can('dashboard.expenses')) {
                 unset($kpis['expense']);
             }
-            if (!Auth::can('dues.view')) {
+            if (!Auth::can('dashboard.due_collection') && !Auth::can('dashboard.due_payment')) {
                 unset($kpis['due_collect'], $kpis['due_pay'], $kpis['receivable'], $kpis['payable']);
+            } else {
+                if (!Auth::can('dashboard.due_collection')) {
+                    unset($kpis['due_collect']);
+                }
+                if (!Auth::can('dashboard.due_payment')) {
+                    unset($kpis['due_pay']);
+                }
             }
         }
 
         $topProducts = Auth::can('sales.view') ? $dashboard->topProducts($start, $end) : [];
-        if ($topProducts !== [] && !Auth::can('revenue.view')) {
+        if ($topProducts !== [] && !Auth::can('dashboard.revenue')) {
             foreach ($topProducts as &$row) {
                 unset($row['revenue']);
             }
@@ -135,13 +152,13 @@ final class DashboardController extends Controller
         [$start, $end] = $this->range();
         $dashboard     = new Dashboard();
         $trend         = $dashboard->salesTrend($start, $end);
-        if (!Auth::can('sales_total.view')) {
+        if (!Auth::can('dashboard.sales')) {
             unset($trend['sales']);
         }
-        if (!Auth::can('profit.view')) {
+        if (!Auth::can('dashboard.profit')) {
             unset($trend['profit']);
         }
-        if (!Auth::can('costs.view')) {
+        if (!Auth::can('dashboard.purchase')) {
             unset($trend['purchases']);
         }
         Response::json([

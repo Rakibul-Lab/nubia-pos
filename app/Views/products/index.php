@@ -8,7 +8,8 @@ $exportQuery = array_filter([
 ]);
 $exportBase = url('products/export') . ($exportQuery ? ('?' . http_build_query($exportQuery) . '&') : '?');
 $canCosts = can('costs.view');
-$colspan = $canCosts ? 8 : 7;
+$canWholesale = can('products.wholesale.view');
+$colspan = 7 + (int) $canCosts + (int) $canWholesale;
 ?>
 <?= View::partial('components.page_head', [
     'title'       => 'Products',
@@ -58,7 +59,7 @@ $colspan = $canCosts ? 8 : 7;
         <table class="nubia">
             <thead>
                 <tr>
-                    <th>Product</th><th>SKU</th><th>Category</th><?php if ($canCosts): ?><th>Cost <span class="inc-vat">inc.vat</span></th><?php endif; ?><th>Price <span class="inc-vat">inc.vat</span></th><th>Stock<?= ($warehouseId ?? null) ? ' <span class="inc-vat">this warehouse</span>' : ' <span class="inc-vat">all warehouses</span>' ?></th><th>Status</th><th class="text-end">Actions</th>
+                    <th>Product</th><th>SKU</th><th>Category</th><?php if ($canCosts): ?><th>Cost <span class="inc-vat">inc.vat</span></th><?php endif; ?><th>Price <span class="inc-vat">inc.vat</span></th><?php if ($canWholesale): ?><th>Wholesale <span class="inc-vat">inc.vat</span></th><?php endif; ?><th>Stock<?= ($warehouseId ?? null) ? ' <span class="inc-vat">this warehouse</span>' : ' <span class="inc-vat">all warehouses</span>' ?></th><th>Status</th><th class="text-end">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -78,6 +79,7 @@ $colspan = $canCosts ? 8 : 7;
                     <td><?= e($p['category_name'] ?? '—') ?></td>
                     <?php if ($canCosts): ?><td><?= money_inc_vat($p['cost_price']) ?></td><?php endif; ?>
                     <td class="fw-800"><?= money_inc_vat($p['selling_price']) ?></td>
+                    <?php if ($canWholesale): ?><td><?= money_inc_vat($p['wholesale_price'] ?? 0) ?></td><?php endif; ?>
                     <td>
                         <span class="badge-pill <?= $stock <= 0 ? 'badge-danger' : ($stock <= $alert ? 'badge-warning' : 'badge-success') ?>">
                             <?= rtrim(rtrim(number_format($stock, 2), '0'), '.') ?> <?= e($p['unit'] ?? '') ?>

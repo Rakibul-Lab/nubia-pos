@@ -204,6 +204,23 @@ if (!function_exists('strip_product_costs')) {
     }
 }
 
+if (!function_exists('strip_product_wholesale')) {
+    /**
+     * Remove wholesale prices from product payloads for unauthorized users.
+     *
+     * @param array<int|string,mixed> $row
+     * @return array<int|string,mixed>
+     */
+    function strip_product_wholesale(array $row): array
+    {
+        if (\App\Core\Auth::can('products.wholesale.view')) {
+            return $row;
+        }
+        unset($row['wholesale_price']);
+        return $row;
+    }
+}
+
 if (!function_exists('strip_product_costs_list')) {
     /**
      * @param array<int,array<string,mixed>> $rows
@@ -213,7 +230,7 @@ if (!function_exists('strip_product_costs_list')) {
     {
         foreach ($rows as &$row) {
             if (is_array($row)) {
-                $row = strip_product_costs($row, $allowPurchaseDefault);
+                $row = strip_product_wholesale(strip_product_costs($row, $allowPurchaseDefault));
             }
         }
         unset($row);

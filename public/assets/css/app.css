@@ -21,6 +21,7 @@
     --sidebar-w: 264px;
     --sidebar-w-collapsed: 78px;
     --header-h: 68px;
+    --bottom-nav-h: 66px;
     --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     --font: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
@@ -60,6 +61,12 @@
 }
 
 * { box-sizing: border-box; }
+
+/* Stop mobile Safari/Chrome from re-scaling text on orientation change. */
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
 
 body {
     margin: 0;
@@ -124,7 +131,15 @@ a:hover { color: var(--brand-2); }
 }
 .brand-text small { display: block; font-size: 0.62rem; font-weight: 600; color: var(--text-soft); letter-spacing: 0.14em; text-transform: uppercase; }
 
-.sidebar-nav { flex: 1; overflow-y: auto; padding: 8px 14px 24px; }
+.sidebar-nav {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 8px 14px 24px;
+}
 .sidebar-nav::-webkit-scrollbar { width: 6px; }
 
 .nav-section-label {
@@ -251,6 +266,8 @@ a:hover { color: var(--brand-2); }
 
 .icon-btn {
     width: 42px; height: 42px;
+    padding: 0;
+    margin: 0;
     border-radius: 12px;
     border: 1px solid var(--border);
     background: var(--surface-2);
@@ -259,6 +276,9 @@ a:hover { color: var(--brand-2); }
     cursor: pointer;
     transition: all var(--transition);
     position: relative;
+    flex-shrink: 0;
+    appearance: none;
+    -webkit-appearance: none;
 }
 .icon-btn:hover { color: var(--brand); border-color: var(--brand); transform: translateY(-1px); }
 .icon-btn .material-symbols-rounded { font-size: 22px; }
@@ -419,6 +439,22 @@ table.nubia tbody td { padding: 13px 16px; border-bottom: 1px solid var(--border
 table.nubia tbody tr { transition: background var(--transition); }
 table.nubia tbody tr:hover { background: var(--surface-2); }
 table.nubia tbody tr:last-child td { border-bottom: none; }
+
+.table-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+.table-actions form {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+}
 
 /* ------------------------- Badges -------------------------- */
 .badge-pill { padding: 4px 11px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
@@ -599,22 +635,35 @@ table.nubia tbody tr:last-child td { border-bottom: none; }
 
 /* ------------------------- Responsive ---------------------- */
 @media (max-width: 991.98px) {
-    .sidebar { transform: translateX(-100%); box-shadow: var(--shadow-lg); }
+    .sidebar {
+        transform: translateX(-100%);
+        box-shadow: var(--shadow-lg);
+        top: 0;
+        /* env() is inlined — iOS PWA often ignores it inside custom properties */
+        bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
+        height: auto;
+        overflow: hidden;
+        padding-top: env(safe-area-inset-top, 0px);
+    }
     .sidebar.open { transform: translateX(0); }
+    .sidebar-nav {
+        padding-bottom: 32px;
+    }
     .main-wrap { margin-left: 0; }
     .sidebar-overlay.show { display: block; }
     .global-search { max-width: none; }
     .bottom-nav {
         display: flex;
         position: fixed; bottom: 0; left: 0; right: 0;
-        height: calc(66px + env(safe-area-inset-bottom, 0px));
+        height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
+        min-height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
         background: var(--sidebar-bg);
         backdrop-filter: blur(var(--glass-blur));
         border-top: 1px solid var(--border);
         z-index: 1040;
         justify-content: space-around;
-        align-items: center;
-        padding: 0 6px env(safe-area-inset-bottom, 0px);
+        align-items: flex-start;
+        padding: 8px 6px env(safe-area-inset-bottom, 0px);
     }
     .bottom-nav a { display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--text-muted); font-size: 0.62rem; font-weight: 600; padding: 6px 10px; border-radius: 12px; }
     .bottom-nav a.active { color: var(--brand); background: var(--surface-2); }
@@ -1003,9 +1052,10 @@ table.nubia tbody tr:last-child td { border-bottom: none; }
     padding: 6px 4px;
     font-size: calc(1em * var(--pos-font-scale, 1));
     -moz-appearance: textfield;
+    appearance: textfield;
 }
 .pos-qty-input::-webkit-outer-spin-button,
-.pos-qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.pos-qty-input::-webkit-inner-spin-button { -webkit-appearance: none; appearance: none; margin: 0; }
 .pos-cart-row,
 .cart-row {
     display: flex;
@@ -2108,6 +2158,21 @@ html.is-pwa .topbar {
 html.is-pwa .sidebar {
     padding-top: env(safe-area-inset-top, 0px);
 }
+@media (max-width: 991.98px) {
+    html.is-pwa .sidebar,
+    html.is-pwa .sidebar.open {
+        bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+    html.is-pwa .sidebar-nav {
+        padding-bottom: 32px;
+    }
+    html.is-pwa .bottom-nav {
+        height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
+        min-height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+}
 .pwa-install-banner {
     position: fixed;
     left: 12px;
@@ -2156,6 +2221,53 @@ html.is-pwa .sidebar {
     html { height: 100%; }
     body { min-height: 100%; }
 }
+@media (display-mode: standalone) and (max-width: 991.98px),
+       (display-mode: minimal-ui) and (max-width: 991.98px) {
+    .sidebar {
+        bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+    .sidebar-nav { padding-bottom: 32px; }
+    .bottom-nav {
+        height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+}
+
+/* ============================================================
+   Touch devices: never let the browser zoom into a field
+   ------------------------------------------------------------
+   iOS Safari magnifies the whole viewport whenever a focused
+   text field renders below 16px, and it does not restore the
+   previous scale on blur — the page just stays zoomed in. The
+   only reliable cure is to keep every text-entry control at
+   16px on touch/narrow viewports; desktop sizing is untouched.
+   The :not() chain keeps checkboxes, switches and file/colour
+   pickers on their own sizing.
+   ============================================================ */
+@media (hover: none) and (pointer: coarse), screen and (max-width: 1024px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="submit"]):not([type="button"]):not([type="hidden"]),
+    select,
+    textarea {
+        font-size: 16px;
+    }
+    /* Small fields would otherwise grow noticeably taller. */
+    .form-control-sm,
+    .form-select-sm { padding: 7px 11px; }
+    .pos-qty-input { width: 58px; min-width: 52px; }
+}
+
+/* Double-tap on a control zooms instead of firing the action on
+   touch screens; this keeps taps instant and scale-stable. */
+button,
+[role="button"],
+.btn,
+.icon-btn,
+.nav-link,
+.pos-tile,
+label,
+select,
+summary { touch-action: manipulation; }
 
 /* ============================================================
    IMEI / serial chip input

@@ -2,7 +2,7 @@
 use App\Core\View;
 /** @var array $customers @var array $warehouses */
 ?>
-<?= View::partial('components.page_head', ['title' => 'New Sale', 'subtitle' => 'Create a retail or wholesale sale']) ?>
+<?= View::partial('components.page_head', ['title' => 'New Sale', 'subtitle' => can('products.wholesale.view') ? 'Create a retail or wholesale sale' : 'Create a retail sale']) ?>
 
 <form method="POST" action="<?= url('sales') ?>" id="saleForm">
     <?= csrf_field() ?>
@@ -15,7 +15,7 @@ use App\Core\View;
                             <?php foreach ($customers as $c): ?><option value="<?= $c['id'] ?>"><?= e($c['name']) ?></option><?php endforeach; ?></select></div>
                     <div class="col-md-3"><label class="form-label">Warehouse</label>
                         <select name="warehouse_id" class="form-select"><?php foreach ($warehouses as $w): ?><option value="<?= $w['id'] ?>" <?= $w['is_default'] ? 'selected' : '' ?>><?= e($w['name']) ?></option><?php endforeach; ?></select></div>
-                    <div class="col-md-3"><label class="form-label">Type</label><select name="type" class="form-select" id="saleType"><option value="retail">Retail</option><option value="wholesale">Wholesale</option></select></div>
+                    <div class="col-md-3"><label class="form-label">Type</label><select name="type" class="form-select" id="saleType"><option value="retail">Retail</option><?php if (can('products.wholesale.view')): ?><option value="wholesale">Wholesale</option><?php endif; ?></select></div>
                     <div class="col-md-2"><label class="form-label">Date</label><input type="date" name="sale_date" class="form-control" value="<?= date('Y-m-d') ?>"></div>
                 </div>
             </div></div>

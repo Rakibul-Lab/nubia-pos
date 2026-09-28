@@ -18,7 +18,7 @@ use App\Core\View;
                 <div class="row g-2 text-center">
                     <?php if (can('costs.view')): ?><div class="col-6"><div class="glass p-2"><div class="text-muted-2" style="font-size:.72rem;">Cost <span class="inc-vat">inc.vat</span></div><div class="fw-800"><?= money($product['cost_price']) ?></div></div></div><?php endif; ?>
                     <div class="col-6"><div class="glass p-2"><div class="text-muted-2" style="font-size:.72rem;">Price <span class="inc-vat">inc.vat</span></div><div class="fw-800"><?= money($product['selling_price']) ?></div></div></div>
-                    <div class="col-6"><div class="glass p-2"><div class="text-muted-2" style="font-size:.72rem;">Wholesale <span class="inc-vat">inc.vat</span></div><div class="fw-800"><?= money($product['wholesale_price']) ?></div></div></div>
+                    <?php if (can('products.wholesale.view')): ?><div class="col-6"><div class="glass p-2"><div class="text-muted-2" style="font-size:.72rem;">Wholesale <span class="inc-vat">inc.vat</span></div><div class="fw-800"><?= money($product['wholesale_price']) ?></div></div></div><?php endif; ?>
                     <div class="col-6"><div class="glass p-2"><div class="text-muted-2" style="font-size:.72rem;">In Stock</div><div class="fw-800"><?= rtrim(rtrim(number_format((float) $product['stock'], 2), '0'), '.') ?></div></div></div>
                 </div>
             </div>

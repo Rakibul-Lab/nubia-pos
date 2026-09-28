@@ -68,10 +68,15 @@ final class SaleController extends Controller
         }
 
         try {
+            $type = $this->request->string('type', 'retail');
+            if ($type === 'wholesale' && !can('products.wholesale.view')) {
+                $type = 'retail';
+            }
+
             $result = SaleService::create([
                 'customer_id'    => $this->request->int('customer_id') ?: null,
                 'warehouse_id'   => $this->request->int('warehouse_id') ?: (new Warehouse())->defaultId(),
-                'type'           => $this->request->string('type', 'retail'),
+                'type'           => $type,
                 'discount'       => $this->request->float('discount'),
                 'discount_type'  => $this->request->string('discount_type', 'fixed'),
                 'tax'            => $this->request->float('tax'),

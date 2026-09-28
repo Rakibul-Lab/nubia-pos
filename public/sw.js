@@ -1,6 +1,6 @@
 /* Nubia Inventory — Service Worker */
 /* Cache version: bump with app releases */
-const CACHE_VERSION = 'nubia-pwa-v1.2.0';
+const CACHE_VERSION = 'nubia-pwa-v1.2.1';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 

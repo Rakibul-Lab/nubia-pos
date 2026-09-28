@@ -83,6 +83,9 @@ final class ProductController extends Controller
                 array_slice($columns, 6, null, true)
             );
         }
+        if (!Auth::can('products.wholesale.view')) {
+            unset($columns['wholesale_price']);
+        }
         $title = 'Products';
 
         if ($format === 'pdf') {
@@ -210,7 +213,7 @@ final class ProductController extends Controller
 
         $this->view('products.show', [
             'title'        => $product['name'],
-            'product'      => strip_product_costs($product),
+            'product'      => strip_product_wholesale(strip_product_costs($product)),
             'stockRows'    => $stockRows,
             'logs'         => $logs,
             'logsMeta'     => [
@@ -669,6 +672,9 @@ final class ProductController extends Controller
         $costPrice = Auth::can('costs.view')
             ? $this->request->float('cost_price')
             : (float) ($existing['cost_price'] ?? 0);
+        $wholesalePrice = Auth::can('products.wholesale.view')
+            ? $this->request->float('wholesale_price')
+            : (float) ($existing['wholesale_price'] ?? 0);
 
         return [
             'category_id'     => $this->request->int('category_id') ?: null,
@@ -682,7 +688,7 @@ final class ProductController extends Controller
             'description'     => $this->request->string('description') ?: null,
             'cost_price'      => $costPrice,
             'selling_price'   => $this->request->float('selling_price'),
-            'wholesale_price' => $this->request->float('wholesale_price'),
+            'wholesale_price' => $wholesalePrice,
             'tax_rate'        => 0, // Prices are VAT-inclusive; no separate tax % on products
             'alert_quantity'  => $this->request->float('alert_quantity', 5),
             'has_serial'      => $this->request->bool('has_serial') ? 1 : 0,
@@ -701,7 +707,7 @@ final class ProductController extends Controller
     {
         return [
             'title'      => $product ? 'Edit Product' : 'New Product',
-            'product'    => $product ? strip_product_costs($product) : $product,
+            'product'    => $product ? strip_product_wholesale(strip_product_costs($product)) : $product,
             'categories' => (new Category())->all(['status' => 1], 'name'),
             'brands'     => (new Brand())->all(['status' => 1], 'name'),
             'units'      => (new Unit())->all(['status' => 1], 'name'),

@@ -15,8 +15,18 @@ use App\Core\View;
             <td class="text-muted-2" style="font-size:.82rem;"><?= $u['last_login_at'] ? date('M j, g:i A', strtotime($u['last_login_at'])) : 'Never' ?></td>
             <td class="text-end">
                 <?php $canManageThisUser = ($u['role_slug'] ?? '') !== 'super-admin' || can('users.assign_super_admin'); ?>
-                <?php if ($canManageThisUser && can('users.edit')): ?><a href="<?= url('users/' . $u['id'] . '/edit') ?>" class="icon-btn" style="width:34px;height:34px;display:inline-grid;"><span class="material-symbols-rounded" style="font-size:18px;">edit</span></a><?php endif; ?>
-                <?php if ($canManageThisUser && can('users.delete')): ?><form method="POST" action="<?= url('users/' . $u['id']) ?>" class="d-inline"><?= csrf_field() ?><input type="hidden" name="_method" value="DELETE"><button type="button" class="icon-btn" style="width:34px;height:34px;" data-confirm-delete="Delete user?"><span class="material-symbols-rounded" style="font-size:18px;color:var(--danger);">delete</span></button></form><?php endif; ?>
+                <div class="table-actions">
+                    <?php if ($canManageThisUser && can('users.edit')): ?>
+                        <a href="<?= url('users/' . $u['id'] . '/edit') ?>" class="icon-btn" style="width:34px;height:34px;" title="Edit"><span class="material-symbols-rounded" style="font-size:18px;">edit</span></a>
+                    <?php endif; ?>
+                    <?php if ($canManageThisUser && can('users.delete')): ?>
+                        <form method="POST" action="<?= url('users/' . $u['id']) ?>">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="_method" value="DELETE">
+                            <button type="button" class="icon-btn" style="width:34px;height:34px;" data-confirm-delete="Delete user?" title="Delete"><span class="material-symbols-rounded" style="font-size:18px;color:var(--danger);">delete</span></button>
+                        </form>
+                    <?php endif; ?>
+                </div>
             </td>
         </tr>
     <?php endforeach; ?>

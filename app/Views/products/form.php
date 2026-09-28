@@ -63,9 +63,15 @@ $val = static fn (string $k, $d = '') => e((string) ($product[$k] ?? $d));
                     <span class="text-muted-2" style="font-size:.75rem;font-weight:600;">All prices are <span class="inc-vat">inc.vat</span></span>
                 </div>
                 <div class="card-body">
+                    <?php
+                    $canCost = can('costs.view');
+                    $canWholesale = can('products.wholesale.view');
+                    $priceCols = 1 + (int) $canCost + (int) $canWholesale;
+                    $priceCol = $priceCols === 3 ? 'col-md-4' : ($priceCols === 2 ? 'col-md-6' : 'col-12');
+                    ?>
                     <div class="row g-3">
-                        <?php if (can('costs.view')): ?>
-                        <div class="col-md-4">
+                        <?php if ($canCost): ?>
+                        <div class="<?= $priceCol ?>">
                             <label class="form-label" for="cost_price">Cost Price</label>
                             <div class="input-group">
                                 <input type="number" step="0.01" min="0" name="cost_price" id="cost_price" class="form-control" value="<?= $val('cost_price', '') ?>" placeholder="0.00">
@@ -74,7 +80,7 @@ $val = static fn (string $k, $d = '') => e((string) ($product[$k] ?? $d));
                             <span class="price-inc-hint">Purchase / cost amount including VAT</span>
                         </div>
                         <?php endif; ?>
-                        <div class="<?= can('costs.view') ? 'col-md-4' : 'col-md-6' ?>">
+                        <div class="<?= $priceCol ?>">
                             <label class="form-label" for="selling_price">Selling Price *</label>
                             <div class="input-group">
                                 <input type="number" step="0.01" min="0" name="selling_price" id="selling_price" class="form-control" value="<?= $val('selling_price', '') ?>" placeholder="0.00" required>
@@ -82,7 +88,8 @@ $val = static fn (string $k, $d = '') => e((string) ($product[$k] ?? $d));
                             </div>
                             <span class="price-inc-hint">Retail price charged to customer</span>
                         </div>
-                        <div class="<?= can('costs.view') ? 'col-md-4' : 'col-md-6' ?>">
+                        <?php if ($canWholesale): ?>
+                        <div class="<?= $priceCol ?>">
                             <label class="form-label" for="wholesale_price">Wholesale Price</label>
                             <div class="input-group">
                                 <input type="number" step="0.01" min="0" name="wholesale_price" id="wholesale_price" class="form-control" value="<?= $val('wholesale_price', '') ?>" placeholder="0.00">
@@ -90,6 +97,7 @@ $val = static fn (string $k, $d = '') => e((string) ($product[$k] ?? $d));
                             </div>
                             <span class="price-inc-hint">Optional bulk / dealer price</span>
                         </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

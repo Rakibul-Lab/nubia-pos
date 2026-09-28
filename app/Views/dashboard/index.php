@@ -20,28 +20,42 @@ if ($start !== $end) {
     $subtitle .= ' – ' . date('M j, Y', strtotime($end));
 }
 
+$canDashSales     = can('dashboard.sales');
+$canDashProfit    = can('dashboard.profit');
+$canDashPurchase  = can('dashboard.purchase');
+$canDashExpenses  = can('dashboard.expenses');
+$canDashRevenue   = can('dashboard.revenue');
+$canDashDueIn     = can('dashboard.due_collection');
+$canDashDueOut    = can('dashboard.due_payment');
+$canDashStockVal  = can('dashboard.stock_value');
+$canDashKpis      = can('dashboard.metrics')
+    || $canDashSales || $canDashProfit || $canDashPurchase || $canDashExpenses
+    || $canDashRevenue || $canDashDueIn || $canDashDueOut || $canDashStockVal;
+
 $cards = [];
-if (can('dashboard.metrics')) {
-    if (can('sales_total.view')) {
+if ($canDashKpis) {
+    if ($canDashSales) {
         $cards[] = ['Sales', money($kpis['sales'] ?? 0), 'point_of_sale', 'bg-grad-1'];
     }
-    if (can('profit.view')) {
+    if ($canDashProfit) {
         $cards[] = ['Profit', money($kpis['profit'] ?? 0), 'trending_up', 'bg-grad-2'];
     }
-    if (can('costs.view')) {
+    if ($canDashPurchase) {
         $cards[] = ['Purchase', money($kpis['purchase'] ?? 0), 'local_shipping', 'bg-grad-4'];
     }
-    if (can('expenses.view')) {
+    if ($canDashExpenses) {
         $cards[] = ['Expenses', money($kpis['expense'] ?? 0), 'payments', 'bg-grad-3'];
     }
-    if (can('revenue.view')) {
+    if ($canDashRevenue) {
         $cards[] = ['Revenue', money($kpis['revenue'] ?? 0), 'account_balance_wallet', 'bg-grad-6'];
     }
-    if (can('dues.view')) {
+    if ($canDashDueIn) {
         $cards[] = ['Due Collection', money($kpis['due_collect'] ?? 0), 'call_received', 'bg-grad-2'];
+    }
+    if ($canDashDueOut) {
         $cards[] = ['Due Payment', money($kpis['due_pay'] ?? 0), 'call_made', 'bg-grad-5'];
     }
-    if (can('stock_value.view')) {
+    if ($canDashStockVal) {
         $cards[] = ['Stock Value', money($kpis['stock_value'] ?? 0), 'inventory_2', 'bg-grad-1'];
     }
 }
@@ -77,7 +91,8 @@ if (can('dashboard.metrics')) {
 </div></div>
 
 <!-- KPI cards -->
-<?php if (can('dashboard.metrics')): ?>
+<?php if ($canDashKpis): ?>
+<?php if ($cards): ?>
 <div class="row g-3 mb-1">
     <?php foreach ($cards as $i => $c): ?>
         <div class="col-6 col-md-4 col-xl-3">
@@ -89,6 +104,7 @@ if (can('dashboard.metrics')) {
         </div>
     <?php endforeach; ?>
 </div>
+<?php endif; ?>
 
 <!-- Secondary metrics (live snapshot) -->
 <div class="row g-3 my-1">
@@ -103,7 +119,7 @@ if (can('dashboard.metrics')) {
     if (can('suppliers.view')) {
         $secondary[] = ['Total Suppliers', number_format((int) ($kpis['total_suppliers'] ?? 0)), 'diversity_3'];
     }
-    if (can('dues.view')) {
+    if ($canDashDueIn || $canDashDueOut) {
         $secondary[] = ['Receivable / Payable', money($kpis['receivable'] ?? 0, false) . ' / ' . money($kpis['payable'] ?? 0, false), 'swap_horiz'];
     }
     foreach ($secondary as $s): ?>
@@ -125,7 +141,7 @@ if (can('dashboard.metrics')) {
     <div class="col-lg-8">
         <div class="card h-100">
             <div class="card-header">
-                <span><?= can('sales_total.view') ? 'Sales' : 'Trend' ?><?= can('costs.view') ? (can('sales_total.view') ? ', Purchase' : 'Purchase') : '' ?><?= can('profit.view') ? ' &amp; Profit' : '' ?></span>
+                <span><?= $canDashSales ? 'Sales' : 'Trend' ?><?= $canDashPurchase ? ($canDashSales ? ', Purchase' : 'Purchase') : '' ?><?= $canDashProfit ? ' &amp; Profit' : '' ?></span>
                 <span class="text-muted-2" style="font-size:.8rem;font-weight:600;"><?= e($periodLabels[$period] ?? '') ?></span>
             </div>
             <div class="card-body"><canvas id="salesChart" height="110"></canvas></div>
@@ -184,7 +200,7 @@ if (can('dashboard.metrics')) {
                             <div class="fw-800" style="font-size:.9rem;"><?= e($p['name']) ?></div>
                             <div class="text-muted-2" style="font-size:.75rem;"><?= (int) $p['qty'] ?> sold</div>
                         </div>
-                        <?php if (can('revenue.view')): ?><div class="fw-800" style="font-size:.85rem;"><?= money($p['revenue'] ?? 0) ?></div><?php endif; ?>
+                        <?php if ($canDashRevenue): ?><div class="fw-800" style="font-size:.85rem;"><?= money($p['revenue'] ?? 0) ?></div><?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -208,9 +224,9 @@ if (can('dashboard.metrics')) {
 <?php
 $trendJson    = json_encode($trend, JSON_HEX_APOS | JSON_HEX_QUOT);
 $paymentsJson = json_encode($payments, JSON_HEX_APOS | JSON_HEX_QUOT);
-$showSales    = can('sales_total.view') ? 'true' : 'false';
-$showPurchase = can('costs.view') ? 'true' : 'false';
-$showProfit   = can('profit.view') ? 'true' : 'false';
+$showSales    = $canDashSales ? 'true' : 'false';
+$showPurchase = $canDashPurchase ? 'true' : 'false';
+$showProfit   = $canDashProfit ? 'true' : 'false';
 $pageScript = <<<JS
 (function(){
     const form = document.getElementById('dashboardFilterForm');
